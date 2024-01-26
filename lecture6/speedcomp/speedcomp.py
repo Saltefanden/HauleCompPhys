@@ -3,6 +3,7 @@ import time
 from functools import partial
 import matplotlib.pyplot as plt
 from multiprocessing import Pool
+from numba import njit
 
 def besselup(x: float, l: int) -> list[float]:
     j: list[float] = [0 for _ in range(l+1)]
@@ -38,7 +39,7 @@ def besselup_single(x: list[float], l: int) -> list[list[float]]:
     return j
 
 def besselup_np(x: np.ndarray, l:int) -> np.ndarray:
-    j = np.zeros((l+1, x.shape[0]))
+    j = np.zeros((l+1, x.shape[0]), order="C")
     j[0] = np.sin(x)/x
     j[1] = np.sin(x)/x**2 - np.cos(x)/x
     for i in range(2, l+1):
@@ -55,14 +56,28 @@ def besselup_np_colmajor(x: np.ndarray, l:int) -> np.ndarray:
 
     return j
 
+@njit
+def besselup_np_jit(x: np.ndarray, l:int, j:np.ndarray) -> np.ndarray:
+    j[0] = np.sin(x)/x
+    j[1] = np.sin(x)/x**2 - np.cos(x)/x
+    for i in range(2, l+1):
+        j[i] = (2*i-1)/x * j[i-1] - j[i-2]
 
-def besseldown(x: float, l: int) -> list[float]:
-    Lmax = l * 3*np.sqrt(l)
-    return [0]
+    return j
+
+@njit
+def besselup_np_colmajorjit(x: np.ndarray, l:int, j: np.ndarray) -> np.ndarray:
+    j[:,0] = np.sin(x)/x
+    j[:,1] = np.sin(x)/x**2 - np.cos(x)/x
+    for i in range(2, l+1):
+        j[:,i] = (2*i-1)/x * j[:,i-1] - j[:,i-2]
+
+    return j
+
 
 def test_besselup():
-    l: int=6
-    N: int=1_000
+    l: int=50
+    N: int=10000
     ulim: float=50
     x = [i * ulim/N for i in range(N)]
     start = time.perf_counter()
@@ -78,36 +93,60 @@ def test_besselup():
     mtime = end-start
 
     start = time.perf_counter()
-    _z = list(zip(*besselup_single(x, l)))
+    z = list(zip(*besselup_single(x, l)))
     end = time.perf_counter()
     print(f"Elapsed time {end - start} for Singlepass {N=}")
     vtime = end-start
 
     _x = np.linspace(0, ulim, N)
     start = time.perf_counter()
-    __z = besselup_np(_x, l)
+    z = besselup_np(_x, l)
     end = time.perf_counter()
     print(f"Elapsed time {end - start} for numpy {N=}")
     ntime = end-start
     
     start = time.perf_counter()
-    ___z = besselup_np_colmajor(_x, l)
+    z = besselup_np_colmajor(_x, l)
     end = time.perf_counter()
-    print(f"Elapsed time {end - start} for numpy {N=}")
+    print(f"Elapsed time {end - start} for numpy colmajor {N=}")
     nctime = end-start
+
+    start = time.perf_counter()
+    j = np.zeros((l+1, _x.shape[0]), order="C")
+    z = besselup_np_jit(_x, l, j)
+    end = time.perf_counter()
+    print(f"Elapsed time {end - start} for numpy jit {N=}")
+    njittime = end-start
+
+    start = time.perf_counter()
+    z = besselup_np_jit(_x, l, j)
+    end = time.perf_counter()
+    print(f"Elapsed time {end - start} for numpy jitsecond pass {N=}")
+    njittime2 = end-start
+
+    start = time.perf_counter()
+    j = np.zeros((_x.shape[0],l+1), order="F")
+    z = besselup_np_colmajorjit(_x, l, j)
+    end = time.perf_counter()
+    print(f"Elapsed time {end - start} for numpy colmajor jit {N=}")
+    ncjittime = end-start
+
+    start = time.perf_counter()
+    z = besselup_np_colmajorjit(_x, l, j)
+    end = time.perf_counter()
+    print(f"Elapsed time {end - start} for numpy colmajor jitsecond pass {N=}")
+    ncjittime2 = end-start
 
     print(f"Multiprocessing is a factor of {stime/mtime} faster")
     print(f"Singlepass is a factor of {stime/vtime} faster")
     print(f"Numpy is a factor of {stime/ntime} faster")
     print(f"Numpy colmajor is a factor of {stime/nctime} faster")
+    print(f"Numpy jit is a factor of {stime/njittime} faster")
+    print(f"Numpy colmajorjit is a factor of {stime/ncjittime} faster")
+    print(f"2nd passNumpy jit is a factor of {stime/njittime2} faster")
+    print(f"2nd passNumpy colmajorjit is a factor of {stime/ncjittime2} faster")
+    print(len(z))
 
-    plt.plot(x,y, label="single")
-    # plt.plot(x,z, linestyle="--", label="multi")
-    plt.plot(x,_z, linestyle="--", label="multi")
-    plt.plot(_x, __z.T, label="numpy")
-    plt.plot(_x, ___z, label="numpy")
-    plt.legend()
-    plt.savefig("plot.png")
 
 def main():
     test_besselup()
