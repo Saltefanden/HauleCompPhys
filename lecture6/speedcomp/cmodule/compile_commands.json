@@ -1,0 +1,44 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-c",
+      "-Iinclude",
+      "-O3",
+      "-fPIC",
+      "-o",
+      "bin/bessel.o",
+      "src/bessel.c"
+    ],
+    "directory": "/home/nimu/learn/HauleCompPhys/lecture6/speedcomp/cmodule",
+    "file": "/home/nimu/learn/HauleCompPhys/lecture6/speedcomp/cmodule/src/bessel.c",
+    "output": "/home/nimu/learn/HauleCompPhys/lecture6/speedcomp/cmodule/bin/bessel.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-c",
+      "-I/usr/include/python3.11",
+      "-I/usr/include/python3.11",
+      "-Wsign-compare",
+      "-g",
+      "-fstack-protector-strong",
+      "-Wformat",
+      "-Werror=format-security",
+      "-DNDEBUG",
+      "-g",
+      "-fwrapv",
+      "-O2",
+      "-Wall",
+      "-Iinclude",
+      "-O3",
+      "-fPIC",
+      "-o",
+      "bin/bessel.py.o",
+      "src/bessel.py.c"
+    ],
+    "directory": "/home/nimu/learn/HauleCompPhys/lecture6/speedcomp/cmodule",
+    "file": "/home/nimu/learn/HauleCompPhys/lecture6/speedcomp/cmodule/src/bessel.py.c",
+    "output": "/home/nimu/learn/HauleCompPhys/lecture6/speedcomp/cmodule/bin/bessel.py.o"
+  }
+]

@@ -27,7 +27,8 @@ def besselup_multi(x: list[float], l: int) -> list[list[float]]:
     return y
 
 def besselup_single(x: list[float], l: int) -> list[list[float]]:
-    j: list[list[float]] = [[] for _ in range(l+1)]
+    lx = len(x)
+    j: list[list[float]] = [[0.]*lx for _ in range(l+1)]
     j[0] = [np.sin(_x)/_x if _x else 1. for _x in x]
     if l == 0:
         return j
@@ -37,6 +38,33 @@ def besselup_single(x: list[float], l: int) -> list[list[float]]:
     for i in range(2,l+1):
         j[i] = [(2*i - 1)/_x * j[i-1][idx] - j[i-2][idx] if _x else 0. for idx, _x in enumerate(x)]
     return j
+
+def besselup_single_colmajor(x: list[float], l: int) -> list[list[float]]:
+    lx = l+1
+    j: list[list[float]] = [[0.]*lx for _ in range(len(x))]
+    for idx,_x in enumerate(x): 
+        if not _x:
+            j[idx][0] = 1
+            if lx == 1:
+                continue
+            j[idx][1] = 0
+            if lx == 2:
+                continue
+            for i in range(2, lx):
+                j[idx][i] = 0
+            continue
+
+        j[idx][0] = np.sin(_x) / _x 
+        if lx == 1:
+            return j
+        j[idx][1] = np.sin(_x)/_x**2 - np.cos(_x)/_x 
+        if lx == 2:
+            return j 
+        for i in range(2, lx):
+            j[idx][i] = (2*i - 1)/_x * j[idx][i-1] - j[idx][i-2] 
+        
+    return j
+
 
 def besselup_np(x: np.ndarray, l:int) -> np.ndarray:
     j = np.zeros((l+1, x.shape[0]), order="C")
@@ -74,6 +102,16 @@ def besselup_np_colmajorjit(x: np.ndarray, l:int, j: np.ndarray) -> np.ndarray:
 
     return j
 
+def time_numpycol():
+    l: int=50
+    N: int=1000000
+    ulim: float=50
+    _x = np.linspace(0, ulim, N)
+    start = time.perf_counter()
+    z = besselup_np_colmajor(_x, l)
+    end = time.perf_counter()
+    print(f"Elapsed time {end - start} for numpy colmajor {N=}")
+
 
 def test_besselup():
     l: int=50
@@ -86,17 +124,25 @@ def test_besselup():
     print(f"Elapsed time {end - start} for singleprocess {N=}")
     stime = end - start
 
-    start = time.perf_counter()
-    z = besselup_multi(x, l)
-    end = time.perf_counter()
-    print(f"Elapsed time {end - start} for multiprocess {N=}")
+    # start = time.perf_counter()
+    # z = besselup_multi(x, l)
+    # end = time.perf_counter()
+    # print(f"Elapsed time {end - start} for multiprocess {N=}")
     mtime = end-start
 
     start = time.perf_counter()
-    z = list(zip(*besselup_single(x, l)))
+    # z = list(zip(*besselup_single(x, l)))
+    z = besselup_single(x, l)
     end = time.perf_counter()
     print(f"Elapsed time {end - start} for Singlepass {N=}")
     vtime = end-start
+
+    start = time.perf_counter()
+    # z = list(zip(*besselup_single(x, l)))
+    z = besselup_single_colmajor(x, l)
+    end = time.perf_counter()
+    print(f"Elapsed time {end - start} for Singlepasscolmajor {N=}")
+    vcoltime = end-start
 
     _x = np.linspace(0, ulim, N)
     start = time.perf_counter()
@@ -139,6 +185,7 @@ def test_besselup():
 
     print(f"Multiprocessing is a factor of {stime/mtime} faster")
     print(f"Singlepass is a factor of {stime/vtime} faster")
+    print(f"Singlepass is a factor of {stime/vcoltime} faster")
     print(f"Numpy is a factor of {stime/ntime} faster")
     print(f"Numpy colmajor is a factor of {stime/nctime} faster")
     print(f"Numpy jit is a factor of {stime/njittime} faster")
@@ -149,7 +196,8 @@ def test_besselup():
 
 
 def main():
-    test_besselup()
+    time_numpycol()
+    # test_besselup()
 
 if __name__ == '__main__':
     main()
