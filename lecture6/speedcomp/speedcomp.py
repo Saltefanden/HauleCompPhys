@@ -1,3 +1,4 @@
+from cmodule.lib.besselcc import besselc
 import numpy as np
 import time
 from functools import partial
@@ -112,6 +113,16 @@ def time_numpycol():
     end = time.perf_counter()
     print(f"Elapsed time {end - start} for numpy colmajor {N=}")
 
+def time_besselc():
+    l: int=50
+    N: int=1000000
+    ulim: float=50
+    z = np.zeros(N*(l+1))
+    start = time.perf_counter()
+    besselc(z, N, ulim, l)
+    end = time.perf_counter()
+    print(f"Elapsed time {end - start} for c extension {N=}")
+
 
 def test_besselup():
     l: int=50
@@ -196,7 +207,11 @@ def test_besselup():
 
 
 def main():
+    time_besselc()
     time_numpycol()
+    time_numpycol()
+    time_besselc()
+    time_besselc()
     # test_besselup()
 
 if __name__ == '__main__':

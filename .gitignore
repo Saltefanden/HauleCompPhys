@@ -1,0 +1,10 @@
+__pycache__/
+.cache/
+bin/
+.clangd/
+
+*.swp
+*.o
+*.so
+*.dat
+
