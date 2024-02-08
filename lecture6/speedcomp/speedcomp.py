@@ -225,7 +225,7 @@ def test_besselup():
     print(f"With OMP_NUM_THREADS = {os.environ['OMP_NUM_THREADS']}")
 
     start = time.perf_counter()
-    scipy.special.spherical_jn(0, x)
+    [scipy.special.spherical_jn(_l, x) for _l in range(l+1)]
     end = time.perf_counter()
     scipyt = end-start
     print(f"Elapsed time {end - start} for scipy {N=}")
