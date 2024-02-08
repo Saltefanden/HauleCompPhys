@@ -8,7 +8,7 @@ z = np.zeros((l+1)*N)
 bs.besselc(z, N, ulim, l)
 
 # print(z)
-# print(z[0])
+print(z[0::(l+1)])
 
 
 

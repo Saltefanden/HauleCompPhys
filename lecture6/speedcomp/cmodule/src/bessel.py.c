@@ -25,12 +25,7 @@ PyObject *bessel2d(PyObject *self, PyObject *args){
     printf("Things happened with the array conversion\n");
     return NULL;
   }
-  
-  printf("Values: N=%d, ulim=%f, l=%d\n", N, ulim, l);
   besselup_2d(data, N, ulim, l);
-  /* TODO: Do something with data */  
-  
-
   return (PyObject *) inarr;
 }
 
