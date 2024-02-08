@@ -129,8 +129,9 @@ def time_besselc():
 
 
 def test_besselup():
+    np.seterr(divide = 'ignore', invalid="ignore")
     l: int=50
-    N: int=10000
+    N: int=1000000
     ulim: float=50
     x = [i * ulim/N for i in range(N)]
     start = time.perf_counter()
@@ -173,6 +174,9 @@ def test_besselup():
     nctime = end-start
 
     start = time.perf_counter()
+    # To avoid cheating by caching the result itself use a different value
+    # j = np.zeros((l+2, _x.shape[0]), order="C")
+    # z = besselup_np_jit(_x, l+1, j)
     j = np.zeros((l+1, _x.shape[0]), order="C")
     z = besselup_np_jit(_x, l, j)
     end = time.perf_counter()
@@ -188,6 +192,9 @@ def test_besselup():
     start = time.perf_counter()
     j = np.zeros((_x.shape[0],l+1), order="F")
     z = besselup_np_colmajorjit(_x, l, j)
+    # To avoid cheating by caching the result itself use a different value
+    # j = np.zeros((_x.shape[0],l+2), order="F")
+    # z = besselup_np_colmajorjit(_x, l+1, j)
     end = time.perf_counter()
     print(f"Elapsed time {end - start} for numpy colmajor jit {N=}")
     ncjittime = end-start
@@ -198,6 +205,24 @@ def test_besselup():
     print(f"Elapsed time {end - start} for numpy colmajor jitsecond pass {N=}")
     ncjittime2 = end-start
 
+    z = np.zeros(N*(l+1))
+    os.environ["OMP_NUM_THREADS"] = "1" 
+    start = time.perf_counter()
+    besselc(z, N, ulim, l)
+    end = time.perf_counter()
+    comp1 = end-start
+    print(f"Elapsed time {end - start} for c extension {N=}", end= " ")
+    print(f"With OMP_NUM_THREADS = {os.environ['OMP_NUM_THREADS']}")
+
+    z = np.zeros(N*(l+1))
+    os.environ["OMP_NUM_THREADS"] = "12"
+    start = time.perf_counter()
+    besselc(z, N, ulim, l)
+    end = time.perf_counter()
+    comp12 = end-start
+    print(f"Elapsed time {end - start} for c extension {N=}", end= " ")
+    print(f"With OMP_NUM_THREADS = {os.environ['OMP_NUM_THREADS']}")
+
     print(f"Multiprocessing is a factor of {stime/mtime} faster")
     print(f"Singlepass is a factor of {stime/vtime} faster")
     print(f"Singlepass is a factor of {stime/vcoltime} faster")
@@ -207,16 +232,17 @@ def test_besselup():
     print(f"Numpy colmajorjit is a factor of {stime/ncjittime} faster")
     print(f"2nd passNumpy jit is a factor of {stime/njittime2} faster")
     print(f"2nd passNumpy colmajorjit is a factor of {stime/ncjittime2} faster")
-    print(len(z))
+    print(f"C extension is a factor of {stime/comp1} faster")
+    print(f"C extension with 12 threads is a factor of {stime/comp12} faster")
 
 
 def main():
-    time_besselc()
-    time_numpycol()
-    time_numpycol()
-    time_besselc()
-    time_besselc()
-    # test_besselup()
+    # time_besselc()
+    # time_numpycol()
+    # time_numpycol()
+    # time_besselc()
+    # time_besselc()
+    test_besselup()
 
 if __name__ == '__main__':
     main()
