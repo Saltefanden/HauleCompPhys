@@ -1,3 +1,4 @@
+import scipy
 import os
 from cmodule.lib.besselcc import besselc
 import numpy as np
@@ -106,7 +107,7 @@ def besselup_np_colmajorjit(x: np.ndarray, l:int, j: np.ndarray) -> np.ndarray:
 
 def time_numpycol():
     l: int=50
-    N: int=10000000
+    N: int=100000
     ulim: float=50
     _x = np.linspace(0, ulim, N)
     start = time.perf_counter()
@@ -131,7 +132,7 @@ def time_besselc():
 def test_besselup():
     np.seterr(divide = 'ignore', invalid="ignore")
     l: int=50
-    N: int=1000000
+    N: int=100000
     ulim: float=50
     x = [i * ulim/N for i in range(N)]
     start = time.perf_counter()
@@ -223,6 +224,12 @@ def test_besselup():
     print(f"Elapsed time {end - start} for c extension {N=}", end= " ")
     print(f"With OMP_NUM_THREADS = {os.environ['OMP_NUM_THREADS']}")
 
+    start = time.perf_counter()
+    scipy.special.spherical_jn(0, x)
+    end = time.perf_counter()
+    scipyt = end-start
+    print(f"Elapsed time {end - start} for scipy {N=}")
+
     print(f"Multiprocessing is a factor of {stime/mtime} faster")
     print(f"Singlepass is a factor of {stime/vtime} faster")
     print(f"Singlepass is a factor of {stime/vcoltime} faster")
@@ -234,6 +241,7 @@ def test_besselup():
     print(f"2nd passNumpy colmajorjit is a factor of {stime/ncjittime2} faster")
     print(f"C extension is a factor of {stime/comp1} faster")
     print(f"C extension with 12 threads is a factor of {stime/comp12} faster")
+    print(f"Scipy is a factor of {stime/scipyt} faster")
 
 
 def main():
