@@ -6,7 +6,7 @@ def besselup(x: np.ndarray, l: int) -> np.ndarray:
     j0 = np.sin(x)/x
     if l == 0:
         return j0
-    j1 = np.sin(x)/x**2 - np.cos(x)/x
+    j1 = j0/x - np.cos(x)/x
 
     for i in range(2, l+1):
         j0, j1 = j1, (2*i-1)/x * j1 - j0
