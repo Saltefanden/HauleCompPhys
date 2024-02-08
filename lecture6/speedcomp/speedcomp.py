@@ -1,3 +1,4 @@
+import os
 from cmodule.lib.besselcc import besselc
 import numpy as np
 import time
@@ -105,7 +106,7 @@ def besselup_np_colmajorjit(x: np.ndarray, l:int, j: np.ndarray) -> np.ndarray:
 
 def time_numpycol():
     l: int=50
-    N: int=1000000
+    N: int=10000000
     ulim: float=50
     _x = np.linspace(0, ulim, N)
     start = time.perf_counter()
@@ -115,13 +116,16 @@ def time_numpycol():
 
 def time_besselc():
     l: int=50
-    N: int=1000000
+    N: int=10000000
     ulim: float=50
     z = np.zeros(N*(l+1))
+    if not "OMP_NUM_THREADS" in os.environ:
+        os.environ["OMP_NUM_THREADS"] = "6"
     start = time.perf_counter()
     besselc(z, N, ulim, l)
     end = time.perf_counter()
-    print(f"Elapsed time {end - start} for c extension {N=}")
+    print(f"Elapsed time {end - start} for c extension {N=}", end= " ")
+    print(f"With OMP_NUM_THREADS = {os.environ['OMP_NUM_THREADS']}")
 
 
 def test_besselup():
